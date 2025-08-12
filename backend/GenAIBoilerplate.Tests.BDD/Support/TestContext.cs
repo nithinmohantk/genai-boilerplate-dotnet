@@ -133,25 +133,75 @@ public class TestContext
             response.StatusCode, LastResponseContent);
             
         // Parse error responses
-        if (!response.IsSuccessStatusCode && !string.IsNullOrEmpty(LastResponseContent))
+        if (!response.IsSuccessStatusCode)
         {
-            try
+            if (!string.IsNullOrEmpty(LastResponseContent))
             {
-                var errorResponse = JsonSerializer.Deserialize<Dictionary<string, object>>(LastResponseContent);
-                if (errorResponse?.TryGetValue("message", out var message) == true)
+                try
                 {
-                    LastErrorMessage = message.ToString();
+                    var errorResponse = JsonSerializer.Deserialize<Dictionary<string, object>>(LastResponseContent);
+                    
+                    // First try to get the main message
+                    if (errorResponse?.TryGetValue("message", out var message) == true)
+                    {
+                        LastErrorMessage = message.ToString();
+                    }
+                    
+                    // Try to get validation errors from ModelState format
+                    if (errorResponse?.TryGetValue("errors", out var errors) == true)
+                    {
+                        try
+                        {
+                            var errorsJson = JsonSerializer.Serialize(errors);
+                            LastValidationErrors = JsonSerializer.Deserialize<Dictionary<string, string[]>>(errorsJson);
+                            
+                            // If no main message, construct one from validation errors
+                            if (string.IsNullOrEmpty(LastErrorMessage) && LastValidationErrors?.Any() == true)
+                            {
+                                var allErrors = LastValidationErrors.Values.SelectMany(x => x);
+                                LastErrorMessage = string.Join(", ", allErrors);
+                            }
+                        }
+                        catch (JsonException)
+                        {
+                            // If errors parsing fails, try to extract any error text
+                            var errorText = errors.ToString();
+                            if (!string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(LastErrorMessage))
+                            {
+                                LastErrorMessage = errorText;
+                            }
+                        }
+                    }
+                    
+                    // If still no error message, try common error fields
+                    if (string.IsNullOrEmpty(LastErrorMessage))
+                    {
+                        if (errorResponse?.TryGetValue("title", out var title) == true)
+                        {
+                            LastErrorMessage = title.ToString();
+                        }
+                        else if (errorResponse?.TryGetValue("detail", out var detail) == true)
+                        {
+                            LastErrorMessage = detail.ToString();
+                        }
+                    }
                 }
-                
-                if (errorResponse?.TryGetValue("errors", out var errors) == true)
+                catch (JsonException)
                 {
-                    var errorsJson = JsonSerializer.Serialize(errors);
-                    LastValidationErrors = JsonSerializer.Deserialize<Dictionary<string, string[]>>(errorsJson);
+                    LastErrorMessage = LastResponseContent;
                 }
             }
-            catch (JsonException)
+            else
             {
-                LastErrorMessage = LastResponseContent;
+                // For responses without content (like 401 Unauthorized), set a default error message
+                LastErrorMessage = response.StatusCode switch
+                {
+                    System.Net.HttpStatusCode.Unauthorized => "Unauthorized access",
+                    System.Net.HttpStatusCode.Forbidden => "Forbidden access",
+                    System.Net.HttpStatusCode.BadRequest => "Bad request",
+                    System.Net.HttpStatusCode.NotFound => "Not found",
+                    _ => $"HTTP {(int)response.StatusCode}"
+                };
             }
         }
     }

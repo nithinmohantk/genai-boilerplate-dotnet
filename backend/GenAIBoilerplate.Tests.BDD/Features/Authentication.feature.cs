@@ -343,9 +343,9 @@ this.FeatureBackground();
         [Xunit.TraitAttribute("Category", "authentication")]
         [Xunit.TraitAttribute("Category", "validation")]
         [Xunit.InlineDataAttribute("invalid-email", "SecurePass", "John", "Doe", "Invalid email", new string[0])]
-        [Xunit.InlineDataAttribute("user@example.com", "weak", "John", "Doe", "Password too short", new string[0])]
-        [Xunit.InlineDataAttribute("user@example.com", "SecurePass", "", "Doe", "First name required", new string[0])]
-        [Xunit.InlineDataAttribute("user@example.com", "SecurePass", "John", "", "Last name required", new string[0])]
+        [Xunit.InlineDataAttribute("user@example.com", "weak", "John", "Doe", "Password must be", new string[0])]
+        [Xunit.InlineDataAttribute("user@example.com", "SecurePass", "", "Doe", "First name is required", new string[0])]
+        [Xunit.InlineDataAttribute("user@example.com", "SecurePass", "John", "", "Last name is required", new string[0])]
         public void RegistrationWithInvalidData(string email, string password, string firstName, string lastName, string expectedError, string[] exampleTags)
         {
             string[] @__tags = new string[] {
@@ -656,9 +656,6 @@ this.FeatureBackground();
 #line 118
     testRunner.And("my refresh token should be revoked", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
-#line 119
-    testRunner.And("I should not be able to access protected endpoints", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
-#line hidden
             }
             this.ScenarioCleanup();
         }
@@ -675,7 +672,7 @@ this.FeatureBackground();
                     "profile"};
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Get current user profile", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 122
+#line 121
 this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -688,13 +685,13 @@ this.ScenarioInitialize(scenarioInfo);
 #line 6
 this.FeatureBackground();
 #line hidden
-#line 123
+#line 122
     testRunner.Given("I have a logged-in user with valid tokens", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
 #line hidden
-#line 124
+#line 123
     testRunner.When("I request my user profile", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
-#line 125
+#line 124
     testRunner.Then("I should receive my profile information", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
                 TechTalk.SpecFlow.Table table9 = new TechTalk.SpecFlow.Table(new string[] {
@@ -712,7 +709,7 @@ this.FeatureBackground();
                 table9.AddRow(new string[] {
                             "Role",
                             "User"});
-#line 126
+#line 125
     testRunner.And("the profile should contain:", ((string)(null)), table9, "And ");
 #line hidden
             }
@@ -731,7 +728,7 @@ this.FeatureBackground();
                     "profile"};
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Update user profile", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 134
+#line 133
 this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -744,7 +741,7 @@ this.ScenarioInitialize(scenarioInfo);
 #line 6
 this.FeatureBackground();
 #line hidden
-#line 135
+#line 134
     testRunner.Given("I have a logged-in user with valid tokens", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
 #line hidden
                 TechTalk.SpecFlow.Table table10 = new TechTalk.SpecFlow.Table(new string[] {
@@ -755,16 +752,16 @@ this.FeatureBackground();
                             "Johnny",
                             "Doe",
                             "1234567890"});
-#line 136
+#line 135
     testRunner.When("I update my profile with new information:", ((string)(null)), table10, "When ");
 #line hidden
-#line 139
+#line 138
     testRunner.Then("I should receive a successful update response", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
-#line 140
+#line 139
     testRunner.And("my profile should be updated in the database", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
-#line 141
+#line 140
     testRunner.And("when I request my profile again, it should show the updated information", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
             }

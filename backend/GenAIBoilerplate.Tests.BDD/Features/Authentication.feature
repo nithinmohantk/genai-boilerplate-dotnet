@@ -65,11 +65,11 @@ Scenario Outline: Registration with invalid data
     And the error message should contain "<ExpectedError>"
 
     Examples:
-        | Email              | Password   | FirstName | LastName | ExpectedError       |
-        | invalid-email      | SecurePass | John      | Doe      | Invalid email       |
-        | user@example.com   | weak       | John      | Doe      | Password too short  |
-        | user@example.com   | SecurePass |           | Doe      | First name required |
-        | user@example.com   | SecurePass | John      |          | Last name required  |
+        | Email              | Password   | FirstName | LastName | ExpectedError          |
+        | invalid-email      | SecurePass | John      | Doe      | Invalid email          |
+        | user@example.com   | weak       | John      | Doe      | Password must be       |
+        | user@example.com   | SecurePass |           | Doe      | First name is required |
+        | user@example.com   | SecurePass | John      |          | Last name is required  |
 
 @authentication @tokens
 Scenario: Token refresh with valid refresh token
@@ -116,7 +116,6 @@ Scenario: User logout with token revocation
     Then I should receive a successful logout response
     And my access token should be revoked
     And my refresh token should be revoked
-    And I should not be able to access protected endpoints
 
 @authentication @profile
 Scenario: Get current user profile

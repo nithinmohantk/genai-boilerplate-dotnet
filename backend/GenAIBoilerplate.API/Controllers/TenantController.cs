@@ -11,7 +11,7 @@ namespace GenAIBoilerplate.API.Controllers;
 /// Tenant management controller
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/[controller]s")]
 [Produces("application/json")]
 [Authorize]
 public class TenantController : ControllerBase

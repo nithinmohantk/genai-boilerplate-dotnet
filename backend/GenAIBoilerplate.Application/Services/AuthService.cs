@@ -169,6 +169,9 @@ public class AuthService : IAuthService
             }
 
             await _userRepository.AddAsync(user, cancellationToken);
+            
+            // Save user first to ensure it exists before creating refresh token
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // Generate tokens
             var accessToken = _jwtService.GenerateAccessToken(user);
