@@ -24,7 +24,7 @@ public class TestContext
     // Authentication state
     public string? CurrentAccessToken { get; set; }
     public string? CurrentRefreshToken { get; set; }
-    public UserResponseDto? CurrentUser { get; set; }
+    public UserDto? CurrentUser { get; set; }
     public Guid? CurrentUserId { get; set; }
     public Guid? CurrentTenantId { get; set; }
     
@@ -188,7 +188,7 @@ public class TestContext
     {
         var session = AutoFixture.Create<CreateSessionRequestDto>();
         if (!string.IsNullOrEmpty(title)) session.Title = title;
-        if (!string.IsNullOrEmpty(model)) session.ModelName = model;
+        if (!string.IsNullOrEmpty(model)) session.Model = model;
         return session;
     }
     
@@ -223,7 +223,7 @@ public class TestContext
         
         AutoFixture.Customize<CreateSessionRequestDto>(c => c
             .With(x => x.Title, () => "Test Session " + AutoFixture.Create<string>()[..8])
-            .With(x => x.ModelName, "gpt-4")
+            .With(x => x.Model, "gpt-4")
         );
     }
     
