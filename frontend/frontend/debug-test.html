@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+    <script>
+        console.log('Debug test script loaded');
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error('JavaScript error:', msg, 'at', url + ':' + lineNo + ':' + columnNo);
+            document.body.innerHTML += '<div style="color: red;">JavaScript Error: ' + msg + '</div>';
+            return false;
+        };
+        
+        // Test if React is available
+        window.addEventListener('load', function() {
+            console.log('Page loaded');
+            if (typeof React !== 'undefined') {
+                console.log('React is available');
+            } else {
+                console.log('React is not available');
+            }
+            
+            const rootElement = document.getElementById('root');
+            if (rootElement) {
+                console.log('Root element found:', rootElement.innerHTML);
+                if (rootElement.innerHTML.trim() === '') {
+                    document.body.innerHTML += '<div style="color: orange;">Root element is empty - React app may not have rendered</div>';
+                }
+            } else {
+                console.log('Root element not found');
+                document.body.innerHTML += '<div style="color: red;">Root element not found</div>';
+            }
+        });
+    </script>
+</head>
+<body>
+    <h1>Debug Test</h1>
+    <p>Check console for debug information</p>
+    <div id="test-div">This is a test div to confirm HTML loads</div>
+    
+    <!-- Include the built React app assets -->
+    <link rel="stylesheet" crossorigin href="/assets/index-Pn1HO3Fr.css">
+    <div id="root"></div>
+    <script type="module" crossorigin src="/assets/index-OWjfgaxr.js"></script>
+</body>
+</html>
+</html>

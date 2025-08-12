@@ -1,0 +1,84 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: genai-postgres-dotnet
+    environment:
+      POSTGRES_DB: genai_chatbot
+      POSTGRES_USER: genai_user
+      POSTGRES_PASSWORD: genai_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U genai_user -d genai_chatbot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: genai-redis-dotnet
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Backend API (.NET)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: genai-boilerplate-dotnet-backend:latest
+    container_name: genai-backend-dotnet
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=genai_chatbot;Username=genai_user;Password=genai_password
+      - RedisSettings__ConnectionString=redis:6379
+      - JwtSettings__SecretKey=your-super-secret-key-here-change-in-production-at-least-32-characters-long
+      - JwtSettings__Issuer=GenAIBoilerplateAPI
+      - JwtSettings__Audience=GenAIBoilerplateClient
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "8000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: genai-boilerplate-dotnet-frontend:latest
+    container_name: genai-frontend-dotnet
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:8080"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_WS_URL=ws://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
