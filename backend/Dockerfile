@@ -4,24 +4,24 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy solution and project files for better layer caching
-COPY ["GenAIBoilerplate.sln", "./"]
-COPY ["GenAIBoilerplate.API/GenAIBoilerplate.API.csproj", "GenAIBoilerplate.API/"]
-COPY ["GenAIBoilerplate.Application/GenAIBoilerplate.Application.csproj", "GenAIBoilerplate.Application/"]
-COPY ["GenAIBoilerplate.Infrastructure/GenAIBoilerplate.Infrastructure.csproj", "GenAIBoilerplate.Infrastructure/"]
-COPY ["GenAIBoilerplate.Core/GenAIBoilerplate.Core.csproj", "GenAIBoilerplate.Core/"]
+COPY ["GenAIBoilerplate.Docker.sln", "./"]
+COPY ["backend/GenAIBoilerplate.API/GenAIBoilerplate.API.csproj", "backend/GenAIBoilerplate.API/"]
+COPY ["backend/GenAIBoilerplate.Application/GenAIBoilerplate.Application.csproj", "backend/GenAIBoilerplate.Application/"]
+COPY ["backend/GenAIBoilerplate.Infrastructure/GenAIBoilerplate.Infrastructure.csproj", "backend/GenAIBoilerplate.Infrastructure/"]
+COPY ["backend/GenAIBoilerplate.Core/GenAIBoilerplate.Core.csproj", "backend/GenAIBoilerplate.Core/"]
 
 # Restore dependencies (cached if project files haven't changed)
-RUN dotnet restore
+RUN dotnet restore GenAIBoilerplate.Docker.sln
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN dotnet build -c Release --no-restore
+RUN dotnet build GenAIBoilerplate.Docker.sln -c Release --no-restore
 
 # Stage 2: Publish application
 FROM build AS publish
-RUN dotnet publish "GenAIBoilerplate.API/GenAIBoilerplate.API.csproj" \
+RUN dotnet publish "backend/GenAIBoilerplate.API/GenAIBoilerplate.API.csproj" \
     -c Release \
     --no-build \
     -o /app/publish \

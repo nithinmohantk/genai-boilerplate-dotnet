@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -60,8 +58,8 @@ services:
   # Backend API (.NET)
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./backend/Dockerfile
       target: runtime
     image: genai-boilerplate-dotnet-backend:latest
     container_name: genai-backend-dotnet
