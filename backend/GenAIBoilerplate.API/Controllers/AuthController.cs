@@ -10,7 +10,7 @@ namespace GenAIBoilerplate.API.Controllers;
 /// Authentication controller
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 [Produces("application/json")]
 public class AuthController : ControllerBase
 {
@@ -170,13 +170,13 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Get current user information
+    /// Get current user profile
     /// </summary>
-    [HttpGet("me")]
+    [HttpGet("profile")]
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<UserDto>> GetCurrentUser(CancellationToken cancellationToken)
+    public async Task<ActionResult<UserDto>> GetProfile(CancellationToken cancellationToken)
     {
         try
         {
@@ -199,7 +199,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Update user profile
     /// </summary>
-    [HttpPut("me")]
+    [HttpPut("profile")]
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
