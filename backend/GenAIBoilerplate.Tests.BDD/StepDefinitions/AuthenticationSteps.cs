@@ -32,7 +32,8 @@ public class AuthenticationSteps
         {
             Email = email,
             Password = "TestPass123!",
-            FullName = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
         _context.StoreTestData("registerRequest", registerRequest);
     }
@@ -200,9 +201,10 @@ public class AuthenticationSteps
         // Create and login a test user
         var registerRequest = new RegisterRequestDto
         {
-            Email = "testuser@example.com",
+            Email = "user@example.com",
             Password = "TestPass123!",
-            FullName = "Test User"
+            FirstName = "John",
+            LastName = "Doe"
         };
         
         var json = JsonSerializer.Serialize(registerRequest, _jsonOptions);
@@ -234,7 +236,8 @@ public class AuthenticationSteps
         {
             Email = row["Email"],
             Password = row["Password"],
-            FullName = $"{(row.ContainsKey("FirstName") ? row["FirstName"] : "")} {(row.ContainsKey("LastName") ? row["LastName"] : "")}".Trim()
+            FirstName = row.ContainsKey("FirstName") ? row["FirstName"] : "",
+            LastName = row.ContainsKey("LastName") ? row["LastName"] : ""
         };
         
         var json = JsonSerializer.Serialize(registerRequest, _jsonOptions);
@@ -314,7 +317,8 @@ public class AuthenticationSteps
         {
             Email = row["Email"],
             Password = row["Password"],
-            FullName = $"{row["FirstName"]} {row["LastName"]}"
+            FirstName = row["FirstName"],
+            LastName = row["LastName"]
         };
         
         var json = JsonSerializer.Serialize(registerRequest, _jsonOptions);
@@ -369,7 +373,8 @@ public class AuthenticationSteps
         {
             Email = row["Email"],
             Password = row["Password"],
-            FullName = $"{row["FirstName"]} {row["LastName"]}"
+            FirstName = row["FirstName"],
+            LastName = row["LastName"]
         };
         
         _context.StoreTestData("registerRequest", registerRequest);
@@ -389,7 +394,8 @@ public class AuthenticationSteps
         {
             Email = row["Email"],
             Password = row["Password"],
-            FullName = $"{row["FirstName"]} {row["LastName"]}"
+            FirstName = row["FirstName"],
+            LastName = row["LastName"]
         };
         
         var json = JsonSerializer.Serialize(registerRequest, _jsonOptions);
