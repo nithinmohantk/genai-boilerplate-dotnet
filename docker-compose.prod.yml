@@ -1,0 +1,255 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Production)
+  postgres:
+    image: postgres:15-alpine
+    container_name: genai-postgres-prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-genai_chatbot}
+      POSTGRES_USER: ${POSTGRES_USER:-genai_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data/backups:/backups
+    ports:
+      - "127.0.0.1:5432:5432"  # Bind to localhost only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-genai_user} -d ${POSTGRES_DB:-genai_chatbot}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    networks:
+      - genai-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.2'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis Cache (Production)
+  redis:
+    image: redis:7-alpine
+    container_name: genai-redis-prod
+    command: redis-server --appendonly yes --appendfsync everysec --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "127.0.0.1:6379:6379"  # Bind to localhost only
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    restart: always
+    networks:
+      - genai-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.2'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Backend API (.NET Production)
+  backend:
+    image: ${DOCKER_REGISTRY:-nithinmohantk}/genai-boilerplate-backend:${VERSION:-latest}
+    container_name: genai-backend-prod
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=${POSTGRES_DB:-genai_chatbot};Username=${POSTGRES_USER:-genai_user};Password=${POSTGRES_PASSWORD};Port=5432;SSL Mode=Require;Trust Server Certificate=true
+      - RedisSettings__ConnectionString=redis:6379
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY}
+      - JwtSettings__Issuer=${JWT_ISSUER:-GenAIBoilerplateAPI}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-GenAIBoilerplateClient}
+      - JwtSettings__ExpirationInMinutes=${JWT_EXPIRATION_MINUTES:-60}
+      - JwtSettings__RefreshTokenExpirationInDays=${JWT_REFRESH_DAYS:-7}
+      - AIProviders__OpenAI__ApiKey=${OPENAI_API_KEY}
+      - AIProviders__Anthropic__ApiKey=${ANTHROPIC_API_KEY}
+      - LOGGING__LOGLEVEL__DEFAULT=Warning
+      - LOGGING__LOGLEVEL__MICROSOFT=Warning
+      - LOGGING__LOGLEVEL__SYSTEM=Error
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+    ports:
+      - "127.0.0.1:8000:8080"  # Bind to localhost only
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: always
+    networks:
+      - genai-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # Frontend (React Production)
+  frontend:
+    image: ${DOCKER_REGISTRY:-nithinmohantk}/genai-boilerplate-frontend:${VERSION:-latest}
+    container_name: genai-frontend-prod
+    ports:
+      - "127.0.0.1:3000:8080"  # Bind to localhost only
+    environment:
+      - NODE_ENV=production
+      - VITE_API_BASE_URL=${API_BASE_URL:-http://localhost:8000}
+      - VITE_WS_URL=${WS_URL:-ws://localhost:8000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    networks:
+      - genai-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.2'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Reverse Proxy (Nginx)
+  nginx:
+    image: nginx:alpine
+    container_name: genai-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: always
+    networks:
+      - genai-network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.2'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  # Log aggregation (Promtail for Grafana Cloud or local Loki)
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: genai-promtail-prod
+    volumes:
+      - ./config/promtail/config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - app_logs:/var/log/app:ro
+      - nginx_logs:/var/log/nginx:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - genai-network
+    profiles:
+      - monitoring
+
+  # Metrics collection (Node Exporter)
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: genai-node-exporter-prod
+    ports:
+      - "127.0.0.1:9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - genai-network
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  app_data:
+    driver: local
+  app_logs:
+    driver: local
+  nginx_logs:
+    driver: local
+
+networks:
+  genai-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

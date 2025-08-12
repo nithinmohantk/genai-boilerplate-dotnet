@@ -1,0 +1,371 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  REGISTRY_DOCKER: docker.io
+  REGISTRY_GHCR: ghcr.io
+  IMAGE_NAME_BACKEND: nithinmohantk/genai-boilerplate-backend
+  IMAGE_NAME_FRONTEND: nithinmohantk/genai-boilerplate-frontend
+
+jobs:
+  # Build and test before publishing
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0'
+
+    - name: Test backend build
+      run: |
+        cd backend
+        dotnet restore
+        dotnet build --configuration Release --no-restore
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Test frontend build
+      run: |
+        cd frontend
+        npm ci
+        npm run build
+
+  # Build and push backend image
+  build-backend:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write  # For OIDC
+      security-events: write  # For vulnerability scanning
+
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY_DOCKER }}
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Log in to GitHub Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY_GHCR }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata for backend
+      id: meta-backend
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ${{ env.REGISTRY_DOCKER }}/${{ env.IMAGE_NAME_BACKEND }}
+          ${{ env.REGISTRY_GHCR }}/${{ github.repository }}-backend
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=sha,prefix=sha-
+          type=raw,value=latest,enable={{is_default_branch}}
+        labels: |
+          org.opencontainers.image.title=GenAI Boilerplate Backend
+          org.opencontainers.image.description=ASP.NET Core Web API for GenAI Chatbot Platform
+          org.opencontainers.image.vendor=Nithin Mohan T K
+
+    - name: Build and push backend image
+      id: build-backend
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta-backend.outputs.tags }}
+        labels: ${{ steps.meta-backend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        provenance: true
+        sbom: true
+
+    - name: Generate artifact attestation for backend
+      uses: actions/attest-build-provenance@v1
+      if: github.event_name != 'pull_request'
+      with:
+        subject-name: ${{ env.REGISTRY_GHCR }}/${{ github.repository }}-backend
+        subject-digest: ${{ steps.build-backend.outputs.digest }}
+        push-to-registry: true
+
+  # Build and push frontend image
+  build-frontend:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      security-events: write
+
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY_DOCKER }}
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Log in to GitHub Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY_GHCR }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata for frontend
+      id: meta-frontend
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ${{ env.REGISTRY_DOCKER }}/${{ env.IMAGE_NAME_FRONTEND }}
+          ${{ env.REGISTRY_GHCR }}/${{ github.repository }}-frontend
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=sha,prefix=sha-
+          type=raw,value=latest,enable={{is_default_branch}}
+        labels: |
+          org.opencontainers.image.title=GenAI Boilerplate Frontend
+          org.opencontainers.image.description=React SPA for GenAI Chatbot Platform
+          org.opencontainers.image.vendor=Nithin Mohan T K
+
+    - name: Build and push frontend image
+      id: build-frontend
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta-frontend.outputs.tags }}
+        labels: ${{ steps.meta-frontend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        provenance: true
+        sbom: true
+
+    - name: Generate artifact attestation for frontend
+      uses: actions/attest-build-provenance@v1
+      if: github.event_name != 'pull_request'
+      with:
+        subject-name: ${{ env.REGISTRY_GHCR }}/${{ github.repository }}-frontend
+        subject-digest: ${{ steps.build-frontend.outputs.digest }}
+        push-to-registry: true
+
+  # Security scanning
+  security-scan:
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    permissions:
+      security-events: write
+
+    strategy:
+      matrix:
+        image: 
+          - { name: backend, registry: "${{ env.REGISTRY_DOCKER }}/${{ env.IMAGE_NAME_BACKEND }}" }
+          - { name: frontend, registry: "${{ env.REGISTRY_DOCKER }}/${{ env.IMAGE_NAME_FRONTEND }}" }
+
+    steps:
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ matrix.image.registry }}:latest
+        format: 'sarif'
+        output: 'trivy-results-${{ matrix.image.name }}.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results-${{ matrix.image.name }}.sarif'
+
+  # Integration test with built images
+  integration-test:
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: genai_chatbot
+          POSTGRES_USER: genai_user
+          POSTGRES_PASSWORD: genai_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Test backend container
+      run: |
+        docker run -d --name backend-test \
+          --network host \
+          -e ConnectionStrings__DefaultConnection="Host=localhost;Database=genai_chatbot;Username=genai_user;Password=genai_password" \
+          -e RedisSettings__ConnectionString="localhost:6379" \
+          -e JwtSettings__SecretKey="test-secret-key-at-least-32-characters-long" \
+          ${{ env.REGISTRY_DOCKER }}/${{ env.IMAGE_NAME_BACKEND }}:latest
+
+        # Wait for backend to be healthy
+        timeout 60s sh -c 'until docker exec backend-test curl -f http://localhost:8080/health; do sleep 5; done'
+        
+        # Test API endpoints
+        docker exec backend-test curl -f http://localhost:8080/health
+        
+        # Clean up
+        docker stop backend-test
+        docker rm backend-test
+
+    - name: Test frontend container
+      run: |
+        docker run -d --name frontend-test \
+          -p 3001:8080 \
+          ${{ env.REGISTRY_DOCKER }}/${{ env.IMAGE_NAME_FRONTEND }}:latest
+
+        # Wait for frontend to be healthy
+        timeout 60s sh -c 'until curl -f http://localhost:3001/health; do sleep 5; done'
+        
+        # Test frontend
+        curl -f http://localhost:3001/health
+        
+        # Clean up
+        docker stop frontend-test
+        docker rm frontend-test
+
+  # Create GitHub release
+  release:
+    needs: [build-backend, build-frontend, security-scan, integration-test]
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: GenAI Boilerplate .NET ${{ github.ref_name }}
+        body: |
+          ## 🚀 GenAI Boilerplate .NET ${{ github.ref_name }}
+
+          ### Docker Images
+          - **Backend**: `docker pull ${{ env.IMAGE_NAME_BACKEND }}:${{ github.ref_name }}`
+          - **Frontend**: `docker pull ${{ env.IMAGE_NAME_FRONTEND }}:${{ github.ref_name }}`
+
+          ### Quick Start
+          ```bash
+          # Using Docker Hub images
+          docker run -d --name genai-backend ${{ env.IMAGE_NAME_BACKEND }}:${{ github.ref_name }}
+          docker run -d --name genai-frontend ${{ env.IMAGE_NAME_FRONTEND }}:${{ github.ref_name }}
+
+          # Or use docker-compose
+          VERSION=${{ github.ref_name }} docker-compose -f docker-compose.prod.yml up -d
+          ```
+
+          ### What's Changed
+          See the commit history for detailed changes in this release.
+        draft: false
+        prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+
+  # Update Docker Hub README
+  update-readme:
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Update Backend Docker Hub README
+      uses: peter-evans/dockerhub-description@v4
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        repository: ${{ env.IMAGE_NAME_BACKEND }}
+        readme-filepath: ./docs/DOCKER_BACKEND.md
+
+    - name: Update Frontend Docker Hub README
+      uses: peter-evans/dockerhub-description@v4
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        repository: ${{ env.IMAGE_NAME_FRONTEND }}
+        readme-filepath: ./docs/DOCKER_FRONTEND.md
