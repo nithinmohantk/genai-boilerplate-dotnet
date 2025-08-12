@@ -107,6 +107,21 @@ public class TestContext
     }
     
     /// <summary>
+    /// Retrieve stored test data for value types
+    /// </summary>
+    public T? GetTestDataValue<T>(string key) where T : struct
+    {
+        if (TestData.TryGetValue(key, out var value))
+        {
+            if (value is T directValue)
+                return directValue;
+            if (value != null && typeof(T).IsAssignableFrom(value.GetType()))
+                return (T)value;
+        }
+        return null;
+    }
+    
+    /// <summary>
     /// Store the last HTTP response and content
     /// </summary>
     public async Task StoreLastResponseAsync(HttpResponseMessage response)

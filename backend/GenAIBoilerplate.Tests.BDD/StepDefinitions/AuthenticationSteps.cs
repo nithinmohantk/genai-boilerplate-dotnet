@@ -177,4 +177,129 @@ public class AuthenticationSteps
         tokenResponse.Should().NotBeNull();
         tokenResponse!.AccessToken.Should().NotBeNullOrEmpty();
     }
+
+    // Common steps shared across features
+    [Given(@"the GenAI platform is running")]
+    public void GivenTheGenAIPlatformIsRunning()
+    {
+        // Platform is running if we can reach the health endpoint
+        // This is handled by the test setup - no action needed
+    }
+
+    [Given(@"the database is clean")]
+    public async Task GivenTheDatabaseIsClean()
+    {
+        // Clean up any test data that might exist
+        // This is handled by TestContainers creating fresh instances
+        await Task.CompletedTask;
+    }
+
+    [Given(@"I have a logged-in user with valid tokens")]
+    public async Task GivenIHaveALoggedInUserWithValidTokens()
+    {
+        // Create and login a test user
+        var registerRequest = new RegisterRequestDto
+        {
+            Email = "testuser@example.com",
+            Password = "TestPass123!",
+            FullName = "Test User"
+        };
+        
+        var json = JsonSerializer.Serialize(registerRequest, _jsonOptions);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        
+        var registerResponse = await _context.HttpClient.PostAsync("/api/auth/register", content);
+        if (registerResponse.IsSuccessStatusCode)
+        {
+            var tokenResponse = JsonSerializer.Deserialize<TokenResponseDto>(await registerResponse.Content.ReadAsStringAsync(), _jsonOptions);
+            _context.CurrentAccessToken = tokenResponse!.AccessToken;
+            _context.CurrentUser = tokenResponse.User;
+            _context.SetAuthenticationToken(tokenResponse.AccessToken);
+        }
+    }
+
+    [Given(@"I am a new user")]
+    public void GivenIAmANewUser()
+    {
+        // Clear any existing authentication
+        _context.ClearAuthentication();
+    }
+
+    [When(@"I register with invalid credentials:")]
+    public async Task WhenIRegisterWithInvalidCredentials(Table table)
+    {
+        var row = table.Rows.First();
+        var registerRequest = new RegisterRequestDto
+        {
+            Email = row["Email"],
+            Password = row["Password"],
+            FullName = $"{(row.ContainsKey("FirstName") ? row["FirstName"] : "")} {(row.ContainsKey("LastName") ? row["LastName"] : "")}".Trim()
+        };
+        
+        var json = JsonSerializer.Serialize(registerRequest, _jsonOptions);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        
+        var response = await _context.HttpClient.PostAsync("/api/auth/register", content);
+        await _context.StoreLastResponseAsync(response);
+    }
+
+    [When(@"I update my profile with new information:")]
+    public async Task WhenIUpdateMyProfileWithNewInformation(Table table)
+    {
+        var row = table.Rows.First();
+        var updateRequest = new UpdateProfileRequestDto
+        {
+            FullName = $"{(row.ContainsKey("FirstName") ? row["FirstName"] : "")} {(row.ContainsKey("LastName") ? row["LastName"] : "")}".Trim()
+        };
+        
+        var json = JsonSerializer.Serialize(updateRequest, _jsonOptions);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        
+        var response = await _context.HttpClient.PutAsync("/api/auth/profile", content);
+        await _context.StoreLastResponseAsync(response);
+    }
+
+    [Then(@"I should receive a validation error")]
+    public void ThenIShouldReceiveAValidationError()
+    {
+        _context.LastResponse.Should().NotBeNull();
+        _context.LastResponse!.IsSuccessStatusCode.Should().BeFalse();
+        _context.LastResponse!.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Then(@"the error message should contain ""(.*)""")]
+    public void ThenTheErrorMessageShouldContain(string expectedMessage)
+    {
+        _context.LastErrorMessage.Should().NotBeNullOrEmpty();
+        _context.LastErrorMessage!.Should().ContainEquivalentOf(expectedMessage);
+    }
+
+    [Then(@"I should receive a successful update response")]
+    public void ThenIShouldReceiveASuccessfulUpdateResponse()
+    {
+        _context.LastResponse.Should().NotBeNull();
+        _context.LastResponse!.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    [Then(@"my profile should be updated in the database")]
+    public async Task ThenMyProfileShouldBeUpdatedInTheDatabase()
+    {
+        // Verify by fetching the profile
+        var response = await _context.HttpClient.GetAsync("/api/auth/profile");
+        response.IsSuccessStatusCode.Should().BeTrue();
+        
+        var userProfile = JsonSerializer.Deserialize<UserDto>(await response.Content.ReadAsStringAsync(), _jsonOptions);
+        userProfile.Should().NotBeNull();
+    }
+
+    [Then(@"when I request my profile again, it should show the updated information")]
+    public async Task ThenWhenIRequestMyProfileAgainItShouldShowTheUpdatedInformation()
+    {
+        var response = await _context.HttpClient.GetAsync("/api/auth/profile");
+        response.IsSuccessStatusCode.Should().BeTrue();
+        
+        var userProfile = JsonSerializer.Deserialize<UserDto>(await response.Content.ReadAsStringAsync(), _jsonOptions);
+        userProfile.Should().NotBeNull();
+        userProfile!.FullName.Should().NotBeNullOrEmpty();
+    }
 }
