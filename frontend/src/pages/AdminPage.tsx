@@ -25,7 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import ThemeSelector from '../components/ThemeSelector';
-import { useThemeApplication_Context } from '../contexts/ThemeApplicationContext';
+import { useThemeApplication_Context } from '../hooks/useThemeApplicationContext';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -100,7 +100,7 @@ const AdminPage: React.FC = () => {
   };
 
   const getCategoryColor = (category: string) => {
-    const colors: Record<string, any> = {
+    const colors: Record<string, string> = {
       professional: 'primary',
       creative: 'secondary', 
       industry: 'success',
@@ -288,7 +288,7 @@ const AdminPage: React.FC = () => {
                             <Chip 
                               label={theme.category}
                               size="small"
-                              color={getCategoryColor(theme.category)}
+                              color={getCategoryColor(theme.category) as 'primary' | 'secondary' | 'success' | 'warning' | 'default'}
                             />
                           </TableCell>
                           <TableCell>

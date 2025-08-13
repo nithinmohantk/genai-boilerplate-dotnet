@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useThemeApplication } from '../hooks/useThemeApplication';
 
@@ -45,15 +45,6 @@ export const ThemeApplicationProvider: React.FC<ThemeApplicationProviderProps> =
       {children}
     </ThemeApplicationContext.Provider>
   );
-};
-
-// Custom hook to use the theme application context
-export const useThemeApplication_Context = (): ThemeApplicationContextType => {
-  const context = useContext(ThemeApplicationContext);
-  if (!context) {
-    throw new Error('useThemeApplication must be used within a ThemeApplicationProvider');
-  }
-  return context;
 };
 
 export default ThemeApplicationContext;

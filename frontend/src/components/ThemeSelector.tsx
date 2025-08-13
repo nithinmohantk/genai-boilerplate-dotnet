@@ -13,7 +13,7 @@ import {
   Button,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { useThemeApplication_Context } from '../contexts/ThemeApplicationContext';
+import { useThemeApplication_Context } from '../hooks/useThemeApplicationContext';
 
 // Types for theme data
 interface Theme {
@@ -195,7 +195,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ onThemeChange }) => {
                   <Chip 
                     label={theme.category} 
                     size="small" 
-                    color={getCategoryColor(theme.category) as any}
+                    color={getCategoryColor(theme.category) as 'primary' | 'secondary' | 'success' | 'warning' | 'default'}
                   />
                 </Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>

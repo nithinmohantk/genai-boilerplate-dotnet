@@ -11,8 +11,8 @@ export interface BackendTheme {
   description: string;
   category: string;
   supports_dark_mode: boolean;
-  accessibility_features?: Record<string, any>;
-  css_variables?: Record<string, any>;
+  accessibility_features?: Record<string, unknown>;
+  css_variables?: Record<string, unknown>;
   color_scheme?: {
     light: {
       primary: string;
@@ -174,7 +174,7 @@ export const useThemeApplication = () => {
         fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       },
       shape: {
-        borderRadius: parseInt(cssVariables['border-radius']?.replace('px', '')) || 12,
+        borderRadius: parseInt(String(cssVariables['border-radius'] || '12px').replace('px', '')) || 12,
       },
       components: {
         MuiCssBaseline: {
@@ -200,18 +200,18 @@ export const useThemeApplication = () => {
             root: {
               textTransform: 'none',
               fontWeight: 500,
-              borderRadius: cssVariables['border-radius'] || '8px',
+              borderRadius: String(cssVariables['border-radius']) || '8px',
               transition: 'all 0.2s ease-in-out',
-              boxShadow: cssVariables.shadow || '0 1px 3px rgba(0, 0, 0, 0.1)',
+              boxShadow: String(cssVariables.shadow) || '0 1px 3px rgba(0, 0, 0, 0.1)',
               '&:hover': {
-                boxShadow: cssVariables['shadow-lg'] || '0 4px 12px rgba(0, 0, 0, 0.15)',
+                boxShadow: String(cssVariables['shadow-lg']) || '0 4px 12px rgba(0, 0, 0, 0.15)',
               },
             },
             contained: {
               // Add glossy overlay for glossy themes
-              ...(cssVariables['glossy-overlay'] && {
-                backgroundImage: cssVariables['glossy-overlay'],
-              }),
+              ...(typeof cssVariables['glossy-overlay'] === 'string' ? {
+                backgroundImage: String(cssVariables['glossy-overlay']),
+              } : {}),
             },
           },
         },
@@ -221,13 +221,13 @@ export const useThemeApplication = () => {
               backgroundColor: scheme.surface || (isDark ? '#1e293b' : '#ffffff'),
               transition: 'background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
               backgroundImage: 'none',
-              boxShadow: cssVariables.shadow || '0 1px 3px rgba(0, 0, 0, 0.1)',
+              boxShadow: String(cssVariables.shadow) || '0 1px 3px rgba(0, 0, 0, 0.1)',
               // Add glass effects for glass themes
-              ...(cssVariables['backdrop-filter'] && {
-                backdropFilter: cssVariables['backdrop-filter'],
+              ...(typeof cssVariables['backdrop-filter'] === 'string' ? {
+                backdropFilter: String(cssVariables['backdrop-filter']),
                 backgroundColor: scheme.glass_overlay || scheme.surface,
-                border: cssVariables['glass-border'],
-              }),
+                border: String(cssVariables['glass-border']),
+              } : {}),
             },
             elevation1: {
               backgroundColor: scheme.elevation_1 ? `rgba(${scheme.elevation_1})` : undefined,
@@ -245,13 +245,13 @@ export const useThemeApplication = () => {
             root: {
               backgroundColor: scheme.surface_variant || scheme.surface || (isDark ? '#1e293b' : '#ffffff'),
               transition: 'all 0.3s ease-in-out',
-              borderRadius: cssVariables['border-radius'] || '12px',
-              boxShadow: cssVariables.shadow || '0 2px 8px rgba(0, 0, 0, 0.1)',
+              borderRadius: String(cssVariables['border-radius']) || '12px',
+              boxShadow: String(cssVariables.shadow) || '0 2px 8px rgba(0, 0, 0, 0.1)',
               '&:hover': {
-                boxShadow: cssVariables['shadow-lg'] || '0 8px 24px rgba(0, 0, 0, 0.15)',
+                boxShadow: String(cssVariables['shadow-lg']) || '0 8px 24px rgba(0, 0, 0, 0.15)',
               },
               // Add glossy effects for modern themes
-              ...(cssVariables['glossy-overlay'] && {
+              ...(typeof cssVariables['glossy-overlay'] === 'string' ? {
                 '&::before': {
                   content: '""',
                   position: 'absolute',
@@ -259,12 +259,12 @@ export const useThemeApplication = () => {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  background: cssVariables['glossy-overlay'],
-                  borderRadius: cssVariables['border-radius'] || '12px',
+                  background: String(cssVariables['glossy-overlay']),
+                  borderRadius: String(cssVariables['border-radius']) || '12px',
                   pointerEvents: 'none',
                   zIndex: 1,
                 },
-              }),
+              } : {}),
             },
           },
         },
@@ -273,7 +273,7 @@ export const useThemeApplication = () => {
             root: {
               backgroundColor: scheme.surface || scheme.primary,
               color: scheme.contrast_text || scheme.text,
-              boxShadow: cssVariables.shadow || '0 1px 3px rgba(0, 0, 0, 0.1)',
+              boxShadow: String(cssVariables.shadow) || '0 1px 3px rgba(0, 0, 0, 0.1)',
             },
           },
         },

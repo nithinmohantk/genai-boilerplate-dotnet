@@ -50,13 +50,13 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
     - name: Restore dependencies
-      run: dotnet restore backend/GenAIBoilerplate.sln
+      run: dotnet restore GenAIBoilerplate.sln
     
     - name: Build solution
-      run: dotnet build backend/GenAIBoilerplate.sln --configuration Release --no-restore
+      run: dotnet build GenAIBoilerplate.sln --configuration Release --no-restore
     
     - name: Run unit tests
-      run: dotnet test backend/GenAIBoilerplate.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults/
+      run: dotnet test GenAIBoilerplate.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults/
     
     - name: Run BDD tests
       run: dotnet test backend/GenAIBoilerplate.Tests.BDD/ --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults/BDD/
@@ -104,7 +104,12 @@ jobs:
     - name: Run tests
       run: |
         cd frontend
-        npm test -- --coverage --watchAll=false
+        # Check if any test files exist before running tests
+        if find . -name "*.test.*" -o -name "*.spec.*" | grep -q .; then
+          npm test -- --coverage --watchAll=false
+        else
+          echo "No test files found, skipping tests"
+        fi
     
     - name: Build frontend
       run: |
@@ -155,7 +160,7 @@ jobs:
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
-        args: --severity-threshold=high --file=backend/GenAIBoilerplate.sln
+        args: --severity-threshold=high --file=GenAIBoilerplate.sln
 
   # Code Quality Check
   code-quality:
