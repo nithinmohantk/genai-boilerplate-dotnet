@@ -32,6 +32,28 @@ A production-ready, multi-tenant GenAI chatbot platform built with **ASP.NET Cor
 - **Dependency Injection** - Built-in ASP.NET Core DI container
 - **Health Checks & Metrics** - Kubernetes-ready with health endpoints
 
+## 🔄 Development Workflow
+
+This project uses **GitHub Flow** with a `develop` branch for ongoing development. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed workflow guidelines.
+
+### Quick Start for Contributors
+```bash
+# Clone and setup
+git clone https://github.com/nithinmohantk/genai-boilerplate-dotnet.git
+cd genai-boilerplate-dotnet
+git checkout develop
+
+# Create feature branch
+git checkout -b feature/your-feature-name
+
+# Make changes, commit, and push
+git add .
+git commit -m "feat: add your feature description"
+git push -u origin feature/your-feature-name
+
+# Create PR to develop branch on GitHub
+```
+
 ## 🚀 Quick Start
 
 ### Prerequisites
