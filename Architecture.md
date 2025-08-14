@@ -24,28 +24,32 @@ This document provides a comprehensive overview of the GenAI Boilerplate .NET ap
 The GenAI Boilerplate .NET is a multi-tenant SaaS application that provides AI-powered chat capabilities with a modern tech stack including ASP.NET Core Web API, React frontend, PostgreSQL database, and Redis cache.
 
 ```mermaid
-C4Context
-    title System Context - GenAI Boilerplate .NET
+graph TB
+    subgraph "Users"
+        USER[End User<br/>Uses chat application]
+        ADMIN[Tenant Admin<br/>Manages settings]
+        SUPER[Super Admin<br/>Manages tenants]
+    end
 
-    Person(user, "End User", "Uses the chat application")
-    Person(admin, "Tenant Admin", "Manages tenant settings and users")
-    Person(superAdmin, "Super Admin", "Manages multiple tenants")
+    subgraph "GenAI Boilerplate System"
+        APP[GenAI Boilerplate<br/>Multi-tenant AI Chat]
+    end
 
-    System(genaiApp, "GenAI Boilerplate", "Multi-tenant AI chat application")
+    subgraph "External Services"
+        OPENAI[OpenAI API<br/>AI Model Provider]
+        ANTHROPIC[Anthropic API<br/>Alternative AI Provider]
+        EMAIL[Email Service<br/>Notifications]
+        MONITORING[Monitoring Service<br/>Application Monitoring]
+    end
+
+    USER -->|HTTPS| APP
+    ADMIN -->|HTTPS| APP
+    SUPER -->|HTTPS| APP
     
-    System_Ext(openai, "OpenAI API", "AI model provider")
-    System_Ext(anthropic, "Anthropic API", "Alternative AI provider")
-    System_Ext(email, "Email Service", "Notifications and verification")
-    System_Ext(monitoring, "Monitoring Service", "Application monitoring")
-
-    Rel(user, genaiApp, "Uses", "HTTPS")
-    Rel(admin, genaiApp, "Manages", "HTTPS")
-    Rel(superAdmin, genaiApp, "Administers", "HTTPS")
-    
-    Rel(genaiApp, openai, "AI Requests", "HTTPS/REST")
-    Rel(genaiApp, anthropic, "AI Requests", "HTTPS/REST")
-    Rel(genaiApp, email, "Send emails", "SMTP")
-    Rel(genaiApp, monitoring, "Metrics & Logs", "HTTPS")
+    APP -->|HTTPS/REST| OPENAI
+    APP -->|HTTPS/REST| ANTHROPIC
+    APP -->|SMTP| EMAIL
+    APP -->|HTTPS| MONITORING
 ```
 
 ---
@@ -838,7 +842,7 @@ graph LR
 
     subgraph "CI Pipeline"
         TRIGGER[Push/PR Trigger]
-        BUILD[Build & Test]
+        BUILD[Build and Test]
         SCAN[Security Scan]
         DOCKER_BUILD[Docker Build]
     end
@@ -1089,7 +1093,7 @@ sequenceDiagram
 
 ## Security Architecture
 
-### Authentication & Authorization Flow
+### Authentication and Authorization Flow
 
 ```mermaid
 graph TB
