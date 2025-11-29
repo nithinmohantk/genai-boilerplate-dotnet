@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -9,49 +9,49 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="xunit" Version="2.4.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="coverlet.collector" Version="6.0.0">
+    <PackageReference Include="coverlet.collector" Version="6.0.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     
     <!-- SpecFlow BDD Testing -->
-    <PackageReference Include="SpecFlow" Version="3.9.74" />
-    <PackageReference Include="SpecFlow.xUnit" Version="3.9.74" />
-    <PackageReference Include="SpecFlow.Tools.MsBuild.Generation" Version="3.9.74" />
+    <PackageReference Include="SpecFlow" Version="4.0.31-beta" />
+    <PackageReference Include="SpecFlow.xUnit" Version="4.0.31-beta" />
+    <PackageReference Include="SpecFlow.Tools.MsBuild.Generation" Version="4.0.31-beta" />
     
     <!-- ASP.NET Core Testing -->
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.0" />
     
     <!-- Entity Framework Testing -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0" />
     
     <!-- TestContainers for integration testing -->
-    <PackageReference Include="Testcontainers" Version="3.6.0" />
-    <PackageReference Include="Testcontainers.PostgreSql" Version="3.6.0" />
-    <PackageReference Include="Testcontainers.Redis" Version="3.6.0" />
+    <PackageReference Include="Testcontainers" Version="4.1.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.1.0" />
+    <PackageReference Include="Testcontainers.Redis" Version="4.1.0" />
     
     <!-- HTTP Client Testing -->
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
     
     <!-- Mocking -->
-    <PackageReference Include="Moq" Version="4.20.69" />
-    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="FluentAssertions" Version="7.0.0" />
     
     <!-- AutoFixture for test data -->
     <PackageReference Include="AutoFixture" Version="4.18.1" />
     <PackageReference Include="AutoFixture.Xunit2" Version="4.18.1" />
     
     <!-- WebDriver for UI testing -->
-    <PackageReference Include="Selenium.WebDriver" Version="4.15.0" />
-    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="119.0.6045.10500" />
-    <PackageReference Include="Selenium.Support" Version="4.15.0" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.27.0" />
+    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="132.0.6834.8300" />
+    <PackageReference Include="Selenium.Support" Version="4.27.0" />
   </ItemGroup>
 
   <ItemGroup>

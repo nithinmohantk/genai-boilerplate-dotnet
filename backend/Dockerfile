@@ -1,6 +1,6 @@
 # Multi-stage build for GenAI Boilerplate .NET Backend
 # Stage 1: Build environment
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy solution and project files for better layer caching
@@ -29,7 +29,7 @@ RUN dotnet publish "backend/GenAIBoilerplate.API/GenAIBoilerplate.API.csproj" \
     /p:UseAppHost=false
 
 # Stage 3: Runtime environment
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 # Install security updates, curl for health checks, and clean up
 RUN apt-get update && \

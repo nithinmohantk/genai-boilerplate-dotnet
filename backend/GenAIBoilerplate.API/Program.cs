@@ -80,10 +80,7 @@ builder.Services.AddCors(options =>
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new() { Title = "GenAI Boilerplate API", Version = "v1" });
-});
+builder.Services.AddSwaggerGen();
 
 // Add health checks
 builder.Services.AddHealthChecks()
